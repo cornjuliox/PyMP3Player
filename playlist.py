@@ -37,7 +37,7 @@ class PlaylistListCtrl(wx.Panel):
 		# note; lists of data must match
 		# the order in wich the columns appear.
 		# .data should be a list, remember?
-		self.dataOlv.SetObjects(self.parsed_list)
+		self.dataOlv.AddObjects(self.parsed_list)
 
 	def OnActivation(self, event):
 		myObject = self.dataOlv.GetSelectedObject()
