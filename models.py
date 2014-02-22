@@ -9,6 +9,7 @@ class Song():
 		# but i'll keep it in anyways to see where
 		# it leads me.
 		self.metadata = self.Analyze(self.filepath)
+		
 		self.title = u"".join(self.metadata["title"])
 		self.artist = u"".join(self.metadata["artist"])
 		self.album = u"".join(self.metadata["album"])

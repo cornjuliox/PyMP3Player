@@ -1,10 +1,7 @@
 # new main.py
 import wx
-from musicplayer import MusicPlayer
-from directorybrowser import DirectoryBrowser
-from playlist import PlaylistListCtrl
-from fileloader import FileLoader
-from experimental import Feed
+from views import *
+from pubsub import pub
 
 class MainWindow(wx.Frame):
 	def __init__(self, *args, **kwargs):
@@ -14,11 +11,6 @@ class MainWindow(wx.Frame):
 		self.music_player = MusicPlayer(self.master_panel)
 		self.file_loader = FileLoader(self.master_panel)
 		self.playlist = PlaylistListCtrl(self.master_panel)
-
-		# this -might- defeat the purpose of the observer pattern
-		# right? Maybe?
-		self.file_loader.sub_interface.RegisterObserver(self.playlist)
-		self.playlist.sub_interface.RegisterObserver(self.music_player)
 
 		self.master_sizer = wx.BoxSizer(wx.HORIZONTAL)
 

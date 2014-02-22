@@ -2,11 +2,34 @@ import wx
 import wx.media as media
 import os
 import eyed3
-from experimental import ObserverInterface
+from experimental import Song
+import wx.dataview as dv
+from ObjectListView import ObjectListView, ColumnDefn
+from pubsub import pub
 
-# note: I might have to package the buttons
-# with this thing rather than having it separate
-# like i do now.
+
+class FileLoader(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		super(FileLoader, self).__init__(*args, **kwargs)
+
+		self.load_button = wx.Button(self, wx.ID_ANY, "Load Files?")
+		self.load_button.Bind(wx.EVT_BUTTON, self.OnLoad)
+
+		self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer.Add(self.load_button, 1, wx.EXPAND)
+		self.SetSizer(self.sizer)
+
+	def OnLoad(self, event):
+		dialog = wx.FileDialog(self, message="Select a file to play.",
+			defaultDir = os.getcwd(),
+			defaultFile = "",
+			style = wx.OPEN | wx.CHANGE_DIR | wx.MULTIPLE)
+		if dialog.ShowModal() == wx.ID_OK:
+			songlist = []
+			filepath = dialog.GetPaths()
+			for path in filepath:
+				songlist.append(Song(path))
+			pub.sendMessage("files_loaded_topic", data=songlist)
 
 class MusicPlayer(wx.Panel):
 	def __init__(self, *args, **kwargs):
@@ -28,7 +51,9 @@ class MusicPlayer(wx.Panel):
 
 		self.SetSizer(self.master_sizer)
 
-	def UpdateStateControl(self, data):
+		pub.subscribe(self.OnLoad, 'file_selected_topic')
+
+	def UpdateDataView(self, data):
 		try: 
 			self.media_ctrl.Load(data.filepath)
 		except:
@@ -120,5 +145,45 @@ class MusicPlayer(wx.Panel):
 	def OnStop(self, event):
 		self.media_ctrl.Stop()
 
+	def OnLoad(self, song):
+		self.media_ctrl.Load(song.filepath)
+		self.UpdateDataView(song)
 
 
+class PlaylistListCtrl(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		super(PlaylistListCtrl, self).__init__(*args, **kwargs)
+
+		#self.playlist = dv.DataViewListCtrl(self, style=dv.DV_ROW_LINES)
+		self.dataOlv = ObjectListView(self, wx.ID_ANY, style=wx.LC_REPORT | wx.SUNKEN_BORDER)
+		self.parsed_list = []
+
+		self.dataOlv.SetColumns([
+			ColumnDefn("Title", "left", 200, "title"),
+			ColumnDefn("Artist", "left", 200, "artist"),
+			ColumnDefn("Album", "left", 200, "album"),
+			ColumnDefn("Length", "left", 200, "length"),
+			])
+
+		self.dataOlv.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnActivation)
+		pub.subscribe(self.UpdateStateControl, "files_loaded_topic")
+
+		self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer.Add(self.dataOlv, 1, wx.EXPAND | wx.ALL, border=5)
+		self.SetSizer(self.sizer)
+
+	def UpdateStateControl(self, data):
+		# build a list of songs and their attribs
+		# [['artist', 'title', 'album']]
+		self.parsed_list = data
+		self.refreshList()
+
+	def refreshList(self):
+		# note; lists of data must match
+		# the order in wich the columns appear.
+		# .data should be a list, remember?
+		self.dataOlv.AddObjects(self.parsed_list)
+
+	def OnActivation(self, event):
+		myObject = self.dataOlv.GetSelectedObject()
+		pub.sendMessage("file_selected_topic", song=myObject)
