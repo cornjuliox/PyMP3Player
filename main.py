@@ -23,7 +23,6 @@ class MainWindow(wx.Frame):
 
 		self.master_panel.SetSizer(self.master_sizer)
 
-
 class MyApp(wx.App):
 	def OnInit(self):
 		self.frame = MainWindow(None, -1, title="Music is Fun!", size=(800,600))

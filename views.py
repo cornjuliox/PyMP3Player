@@ -2,10 +2,12 @@ import wx
 import wx.media as media
 import os
 import eyed3
-from experimental import Song
+from models import Song
 import wx.dataview as dv
 from ObjectListView import ObjectListView, ColumnDefn
 from pubsub import pub
+
+import pdb
 
 
 class FileLoader(wx.Panel):
@@ -28,6 +30,9 @@ class FileLoader(wx.Panel):
 			songlist = []
 			filepath = dialog.GetPaths()
 			for path in filepath:
+				song = Song(path)
+				if not song:
+					print "SONG DIDN'T WORK."
 				songlist.append(Song(path))
 			pub.sendMessage("files_loaded_topic", data=songlist)
 
@@ -36,6 +41,8 @@ class MusicPlayer(wx.Panel):
 		super(MusicPlayer, self).__init__(*args, **kwargs)
 
 		# it remains to be seen if my new design choices
+		# have any negative effect on the application
+		# in the end.
 		self.setupTimer()
 		self.media_ctrl = self.setupMediaPlayer()
 		self.media_ctrl.Hide()
@@ -51,6 +58,7 @@ class MusicPlayer(wx.Panel):
 
 		self.SetSizer(self.master_sizer)
 
+		self.Bind(wx.media.EVT_MEDIA_LOADED, self.OnPlay)
 		pub.subscribe(self.OnLoad, 'file_selected_topic')
 
 	def UpdateDataView(self, data):
@@ -93,7 +101,11 @@ class MusicPlayer(wx.Panel):
 
 	def setupMediaPlayer(self):
 		try:
-			backend = media.MEDIABACKEND_DIRECTSHOW
+			# Directshow is  not throwing the 'EVT_MEDIA_LOADED' event
+			# when .load() is called. 
+			# Switching this to WMP10 for now
+			# http://trac.wxwidgets.org/ticket/13828
+			backend = media.MEDIABACKEND_WMP10
 			media_ctrl = media.MediaCtrl(self, wx.ID_ANY, szBackend=backend)
 		except NotImplementedError:
 			print "Error: MediaCtrl not implemented on this system! Windows only!"
@@ -135,8 +147,16 @@ class MusicPlayer(wx.Panel):
 		offset = self.seek_slider.GetValue()
 		self.media_ctrl.Seek(offset)
 
+	# you might be wondering why there are two functions,
+	# both wrapping media_ctrl.Play().
+	# this is because I'm trying to get the player to automatically
+	# start playing when a file is loaded, but EVT_MEDIA_LOADED
+	# for some reason does not want to work properly.
 	def OnPlay(self, event):
 		self.seek_slider.SetRange(0,self.media_ctrl.Length())
+		self.media_ctrl.Play()
+
+	def FirePlay(self):
 		self.media_ctrl.Play()
 
 	def OnPause(self, event):
@@ -148,7 +168,6 @@ class MusicPlayer(wx.Panel):
 	def OnLoad(self, song):
 		self.media_ctrl.Load(song.filepath)
 		self.UpdateDataView(song)
-
 
 class PlaylistListCtrl(wx.Panel):
 	def __init__(self, *args, **kwargs):
@@ -168,9 +187,17 @@ class PlaylistListCtrl(wx.Panel):
 		self.dataOlv.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnActivation)
 		pub.subscribe(self.UpdateStateControl, "files_loaded_topic")
 
+		self.delete_button = wx.Button(self, wx.ID_ANY, "Remove from Playlist")
+		self.delete_button.Bind(wx.EVT_BUTTON, self.OnDelete)
+
+
+		self.wrapper = wx.BoxSizer(wx.VERTICAL)
 		self.sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(self.dataOlv, 1, wx.EXPAND | wx.ALL, border=5)
-		self.SetSizer(self.sizer)
+		self.wrapper.Add(self.sizer, 1, wx.EXPAND)
+		self.wrapper.Add(self.delete_button, 0, wx.EXPAND)
+
+		self.SetSizer(self.wrapper)
 
 	def UpdateStateControl(self, data):
 		# build a list of songs and their attribs
@@ -187,3 +214,7 @@ class PlaylistListCtrl(wx.Panel):
 	def OnActivation(self, event):
 		myObject = self.dataOlv.GetSelectedObject()
 		pub.sendMessage("file_selected_topic", song=myObject)
+
+	def OnDelete(self, event):
+		objects = self.dataOlv.GetSelectedObjects()
+		self.dataOlv.RemoveObjects(objects)

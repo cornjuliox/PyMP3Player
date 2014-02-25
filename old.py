@@ -3,6 +3,17 @@ import wx.media as media
 import os
 import eyed3
 import wx.dataview as dv
+#######################################
+# NOTE:
+# This file is retained for legacy purposes.
+# By that I mean I'm using it as a guide
+# to develop the rest of the app.
+# Since the MediaCtrl class is rather poorly
+# documented, and this file contains
+# pretty much everything I know about it
+# (learned through experimentation)
+#######################################
+
 
 class MainWindow(wx.Frame):
 	def __init__(self, *args, **kwargs):

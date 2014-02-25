@@ -23,8 +23,8 @@ the MediaCtrl control supplied by wxPython to power the music player, which in t
 by DirectShow on Windows.
 
 Although cross-platform compatibility is possible in theory, as the only thing keeping it from 
-working is to change the backend argument in the MediaCtrl constructor,I've decided it'd be 
-best for now to stick Windows-only, as I lack the capability to test and develop on OSX/Linux
+working is to change the backend argument in the MediaCtrl constructor, I've decided it'd be 
+best for now to stick Windows-only, as I lack the capability to test and develop on Mac/Linux
 systems.
 
 ===========================================
@@ -46,5 +46,5 @@ ISSUES
 This project is still in development, so I'm finding new (broken) things every day. Here's what
 I've found so far:
 
-- loading a new group of files from the "Load Files" dialog will erase and repopulate the list
+- (fixed) loading a new group of files from the "Load Files" dialog will erase and repopulate the list
 rather than just 'appending' it. I intend to change this in the future. 
