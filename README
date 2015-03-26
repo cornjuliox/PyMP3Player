@@ -6,38 +6,15 @@ README
 + Current Version: 0.1 (alpha)
 ===========================================
 
-
-===========================================
-DESCRIPTION
-===========================================
-This project is an music player app built in the Python programming language. It currently uses 
-the following libraries/modules:
-
-- Python 2.7
-- wxPython 3.0
-- ObjectListView
-- eyeD3
-
-The project is incomplete as of yet, but basic media player functionality is present. It uses 
-the MediaCtrl control supplied by wxPython to power the music player, which in turn is powered
-by DirectShow on Windows.
-
-Although cross-platform compatibility is possible in theory, as the only thing keeping it from 
-working is to change the backend argument in the MediaCtrl constructor, I've decided it'd be 
-best for now to stick Windows-only, as I lack the capability to test and develop on Mac/Linux
-systems.
-
 ===========================================
 USAGE
 ===========================================
-1. Click on the "Load Files?" button.
+1. Click on File->Load Files. 
 2. Select one or more music files. Its been tested with MP3 files, but the exact extent of the
 backend's support is unknown. I'm assuming that any music file you can currently play on your
 PC, regardless of player, can be played here. I have yet to test other file formats like .ogg
 or .wma.
-3. Once you've hit the OK button, the list at the bottom of the screen will be populated.
-4. Double click on any item in the list to load the file for playing.
-5. Click 'play'.
+5. Click 'play' if it hasn't started playing.
 6. Enjoy!
 
 ===========================================
